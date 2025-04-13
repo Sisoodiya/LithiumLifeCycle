@@ -257,34 +257,34 @@ export class MemStorage implements IStorage {
       tags: ["Emergency", "Community"]
     });
 
-    // Create sample subsidies
+    // Create sample subsidies for India
     const federalSubsidies = [
       {
-        title: "EV Tax Credit",
-        description: "Up to $7,500 tax credit for new electric vehicle purchases based on battery capacity and domestic content.",
-        provider: "Federal Government",
-        category: "Federal Incentives",
-        eligibility: "Individual taxpayers purchasing new qualified electric vehicles",
-        amount: "Up to $7,500",
-        link: "https://www.irs.gov/credits-deductions/credits-for-new-clean-vehicles-purchased-in-2023-or-after"
+        title: "FAME-II Scheme",
+        description: "Faster Adoption and Manufacturing of Electric Vehicles (FAME-II) provides incentives for EV purchases and battery recycling programs.",
+        provider: "Ministry of Heavy Industries, Government of India",
+        category: "Central Government Schemes",
+        eligibility: "EV manufacturers and consumers purchasing electric vehicles with advanced batteries",
+        amount: "Up to ₹1,50,000 for electric vehicles",
+        link: "https://fame2.heavyindustries.gov.in/"
       },
       {
-        title: "Inflation Reduction Act",
-        description: "Expanded incentives for EV manufacturers using recycled battery materials in production.",
-        provider: "Federal Government",
-        category: "Federal Incentives",
-        eligibility: "EV manufacturers",
-        amount: "Variable",
-        link: "https://www.whitehouse.gov/cleanenergy/inflation-reduction-act-guidebook/"
+        title: "PLI Scheme for ACC Batteries",
+        description: "Production Linked Incentive (PLI) Scheme for Advanced Chemistry Cell (ACC) Battery Manufacturing with focus on recycling components.",
+        provider: "Ministry of Heavy Industries, Government of India",
+        category: "Central Government Schemes",
+        eligibility: "Battery manufacturers with recycling capabilities",
+        amount: "₹18,100 Crore total outlay",
+        link: "https://pib.gov.in/PressReleasePage.aspx?PRID=1716525"
       },
       {
-        title: "Battery Research Grants",
-        description: "Department of Energy funding for advanced recycling technology development.",
-        provider: "Department of Energy",
-        category: "Federal Incentives",
-        eligibility: "Research institutions and companies",
-        amount: "$10M-$50M",
-        link: "https://www.energy.gov/eere/vehicles/battery-recycling-prize"
+        title: "National Program on Advanced Chemistry Cell Battery Storage",
+        description: "Initiative to establish domestic battery manufacturing and recycling ecosystem in India.",
+        provider: "NITI Aayog, Government of India",
+        category: "Central Government Schemes",
+        eligibility: "Research institutions and battery manufacturing companies",
+        amount: "₹1,000-5,000 Crore",
+        link: "https://www.niti.gov.in/"
       }
     ];
 
@@ -294,34 +294,44 @@ export class MemStorage implements IStorage {
 
     const stateSubsidies = [
       {
-        title: "California CALeVIP",
-        description: "Rebates for EV charger installation and battery recycling infrastructure.",
-        provider: "California Energy Commission",
+        title: "Delhi EV Policy",
+        description: "Comprehensive incentives for EV adoption and battery recycling infrastructure in Delhi.",
+        provider: "Delhi Transport Department",
         category: "State & Local Programs",
-        state: "California",
-        eligibility: "Businesses and property owners",
-        amount: "Up to $80,000 per charger",
-        link: "https://calevip.org/"
+        state: "Delhi",
+        eligibility: "Delhi-registered businesses and residents",
+        amount: "Up to ₹1,50,000 for EVs and ₹30,000 for recycling",
+        link: "https://ev.delhi.gov.in/policy"
       },
       {
-        title: "New York Drive Clean",
-        description: "Rebates up to $2,000 for new EV purchases and incentives for battery recycling.",
-        provider: "NYSERDA",
+        title: "Maharashtra EV Policy",
+        description: "Early bird incentives for EV purchases and additional support for battery recycling infrastructure.",
+        provider: "Maharashtra State EV Department",
         category: "State & Local Programs",
-        state: "New York",
-        eligibility: "New York residents",
-        amount: "Up to $2,000",
-        link: "https://www.nyserda.ny.gov/All-Programs/Drive-Clean-Rebate"
+        state: "Maharashtra",
+        eligibility: "Maharashtra residents and businesses",
+        amount: "Up to ₹2,75,000 for EVs",
+        link: "https://evreporter.com/maharashtra-ev-policy-2021/"
       },
       {
-        title: "Texas Emissions Reduction",
-        description: "Grants for businesses implementing battery recycling programs.",
-        provider: "Texas Commission on Environmental Quality",
+        title: "Gujarat EV Policy",
+        description: "Capital subsidies and incentives for setting up battery recycling and swapping infrastructure.",
+        provider: "Gujarat Energy Development Agency",
         category: "State & Local Programs",
-        state: "Texas",
-        eligibility: "Texas businesses",
-        amount: "Up to $100,000",
-        link: "https://www.tceq.texas.gov/airquality/terp"
+        state: "Gujarat",
+        eligibility: "Gujarat-based businesses and fleet operators",
+        amount: "Up to ₹10,00,000 for recycling units",
+        link: "https://geda.gujarat.gov.in/"
+      },
+      {
+        title: "Karnataka Electric Vehicle Policy",
+        description: "R&D support for battery recycling technologies and EV manufacturing in the state.",
+        provider: "Karnataka Renewable Energy Development Ltd.",
+        category: "State & Local Programs",
+        state: "Karnataka",
+        eligibility: "Karnataka-based manufacturers and research institutions",
+        amount: "25% capital subsidy on equipment",
+        link: "https://kreditsldc.in/"
       }
     ];
 
@@ -331,31 +341,40 @@ export class MemStorage implements IStorage {
 
     const utilitySubsidies = [
       {
-        title: "Energy Storage Rebates",
-        description: "Incentives for using second-life batteries for home energy storage systems.",
-        provider: "Various Utilities",
+        title: "Tata Power Storage Incentives",
+        description: "Incentives for using second-life EV batteries for residential solar storage solutions.",
+        provider: "Tata Power",
         category: "Utility Incentives",
-        eligibility: "Residential customers",
-        amount: "$500-$5,000",
-        link: "#"
+        eligibility: "Tata Power residential customers with solar installations",
+        amount: "₹5,000-₹50,000",
+        link: "https://www.tatapower.com/solar-rooftop"
       },
       {
-        title: "Off-Peak Charging Discounts",
-        description: "Special EV charging rates during off-peak hours from participating utilities.",
-        provider: "Various Utilities",
+        title: "BSES Off-Peak Charging Program",
+        description: "Special EV charging rates during off-peak hours (11PM-6AM) in Delhi NCR.",
+        provider: "BSES Rajdhani & Yamuna",
         category: "Utility Incentives",
-        eligibility: "EV owners",
-        amount: "Up to 50% off standard rates",
-        link: "#"
+        eligibility: "BSES customers with registered EVs",
+        amount: "Up to 40% off standard electricity rates",
+        link: "https://www.bsesdelhi.com/web/bses/green-initiatives"
       },
       {
-        title: "Grid Service Programs",
-        description: "Payments for allowing utility control of battery discharge during peak demand.",
-        provider: "Various Utilities",
+        title: "Reliance Energy Grid Balance Program",
+        description: "Financial incentives for allowing utility-controlled discharge of home battery systems during peak demand.",
+        provider: "Reliance Energy",
         category: "Utility Incentives",
-        eligibility: "Battery owners",
-        amount: "$50-$200 per month",
-        link: "#"
+        eligibility: "Customers with battery storage systems",
+        amount: "₹500-₹2,000 per month",
+        link: "https://www.relianceenergy.in"
+      },
+      {
+        title: "EESL Battery Recycling Incentive",
+        description: "Energy Efficiency Services Limited program providing rebates for recycling old EV and energy storage batteries.",
+        provider: "Energy Efficiency Services Limited (EESL)",
+        category: "Utility Incentives",
+        eligibility: "All battery owners",
+        amount: "₹1,000-₹15,000 depending on battery type",
+        link: "https://eeslindia.org/"
       }
     ];
 

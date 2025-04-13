@@ -26,22 +26,23 @@ const SubsidyFinder = () => {
   });
 
   const states = [
-    "California", "New York", "Texas", "Florida", "Illinois", 
-    "Pennsylvania", "Ohio", "Michigan", "Georgia", "North Carolina", 
-    "New Jersey", "Virginia", "Washington", "Arizona", "Massachusetts",
-    "Tennessee", "Indiana", "Missouri", "Maryland", "Wisconsin"
+    "Delhi", "Maharashtra", "Karnataka", "Tamil Nadu", "Gujarat", 
+    "Telangana", "Andhra Pradesh", "Kerala", "Uttar Pradesh", "Rajasthan", 
+    "West Bengal", "Haryana", "Punjab", "Bihar", "Odisha",
+    "Madhya Pradesh", "Assam", "Uttarakhand", "Himachal Pradesh", "Goa"
   ];
 
   const incentiveTypes = [
     { value: "", label: "All incentives" },
-    { value: "Tax credits", label: "Tax credits" },
-    { value: "Rebates", label: "Rebates" },
-    { value: "Grants", label: "Grants" },
-    { value: "Low-interest loans", label: "Low-interest loans" }
+    { value: "Central Government Schemes", label: "Central Government Schemes" },
+    { value: "State & Local Programs", label: "State & Local Programs" },
+    { value: "Utility Incentives", label: "Utility Incentives" },
+    { value: "Tax rebates", label: "Tax rebates" },
+    { value: "Capital subsidies", label: "Capital subsidies" }
   ];
 
   const entityTypes = [
-    "Individual", "Business", "Non-profit organization", "Government entity"
+    "Individual", "Business", "Manufacturer", "Research Institution", "Government entity"
   ];
 
   const handleFindIncentives = async () => {
