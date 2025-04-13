@@ -24,9 +24,9 @@ const PriceEstimateDisplay = ({ batteryDetails, priceEstimate, isCalculating }: 
   // Determine if we should show the results
   const showResults = priceEstimate && !isCalculating;
 
-  // Format currency
+  // Format currency in Indian Rupees
   const formatCurrency = (value: number) => {
-    return `$${value.toLocaleString()}`;
+    return `₹${value.toLocaleString('en-IN')}`;
   };
 
   return (
@@ -115,7 +115,7 @@ const PriceEstimateDisplay = ({ batteryDetails, priceEstimate, isCalculating }: 
                 </div>
                 <div className="ml-3">
                   <Label htmlFor="pickup-option" className="font-medium text-gray-700">Schedule a Pickup</Label>
-                  <p className="text-gray-500 text-sm">We'll come to your location to collect the battery</p>
+                  <p className="text-gray-500 text-sm">We'll collect from your location in major Indian cities</p>
                 </div>
               </div>
             </div>
@@ -127,7 +127,7 @@ const PriceEstimateDisplay = ({ batteryDetails, priceEstimate, isCalculating }: 
                 </div>
                 <div className="ml-3">
                   <Label htmlFor="dropoff-option" className="font-medium text-gray-700">Drop-off at Center</Label>
-                  <p className="text-gray-500 text-sm">Bring your battery to one of our recycling centers</p>
+                  <p className="text-gray-500 text-sm">Visit our centers in Delhi, Mumbai, Bangalore, Hyderabad, or Chennai</p>
                 </div>
               </div>
             </div>

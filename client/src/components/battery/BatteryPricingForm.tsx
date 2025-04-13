@@ -85,11 +85,11 @@ const BatteryPricingForm = ({ onCalculatePrice, isCalculating, setIsCalculating 
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="ev_standard">EV Standard Battery</SelectItem>
-                  <SelectItem value="ev_premium">EV Premium Battery</SelectItem>
-                  <SelectItem value="hybrid">Hybrid Vehicle Battery</SelectItem>
-                  <SelectItem value="energy_storage">Energy Storage Battery</SelectItem>
-                  <SelectItem value="other">Other Li-ion Battery</SelectItem>
+                  <SelectItem value="ev_standard">EV Standard Battery (Tata Nexon, Mahindra XUV400)</SelectItem>
+                  <SelectItem value="ev_premium">EV Premium Battery (MG ZS EV, Hyundai Kona)</SelectItem>
+                  <SelectItem value="hybrid">Hybrid Vehicle Battery (Toyota Camry, Honda City e:HEV)</SelectItem>
+                  <SelectItem value="energy_storage">Energy Storage Battery (Solar/Home Storage)</SelectItem>
+                  <SelectItem value="other">Other Li-ion Battery (E-rickshaw, E-bike)</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -105,7 +105,7 @@ const BatteryPricingForm = ({ onCalculatePrice, isCalculating, setIsCalculating 
               <FormLabel>Battery Model/Make</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., Tesla Model 3, Nissan Leaf"
+                  placeholder="e.g., Tata Nexon EV, MG ZS EV, Mahindra XUV400"
                   {...field}
                 />
               </FormControl>

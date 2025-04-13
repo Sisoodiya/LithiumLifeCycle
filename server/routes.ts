@@ -17,6 +17,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint for Gemini API
+  app.get("/api/test-gemini", async (req: Request, res: Response) => {
+    try {
+      // Test with some sample battery data
+      const testBattery = {
+        type: "ev_standard",
+        model: "Tata Nexon EV",
+        age: 2,
+        capacity: 30,
+        condition: "good"
+      };
+      
+      const estimate = await calculateBatteryPrice(testBattery);
+      res.json({ success: true, estimate });
+    } catch (error) {
+      console.error("Gemini API test error:", error);
+      res.status(500).json({ success: false, error: "Failed to test Gemini API" });
+    }
+  });
+
   // API endpoint to get battery pricing estimate
   app.post("/api/battery/price", async (req: Request, res: Response) => {
     try {
