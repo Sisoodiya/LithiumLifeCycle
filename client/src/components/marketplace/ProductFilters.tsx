@@ -103,12 +103,13 @@ const ProductFilters = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">All Types</SelectItem>
-                    <SelectItem value="EV Battery">EV Battery</SelectItem>
-                    <SelectItem value="Energy Storage">Energy Storage</SelectItem>
+                    <SelectItem value="EV Battery">EV Battery (Tata, Mahindra, MG)</SelectItem>
+                    <SelectItem value="Energy Storage">Energy Storage (Solar, Home)</SelectItem>
                     <SelectItem value="Portable">Portable</SelectItem>
                     <SelectItem value="Cells">Cells</SelectItem>
                     <SelectItem value="Charger">Charger</SelectItem>
-                    <SelectItem value="E-Bike">E-Bike</SelectItem>
+                    <SelectItem value="E-Bike">E-Bike/E-Rickshaw</SelectItem>
+                    <SelectItem value="Inverter">Inverter Battery</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -134,13 +135,13 @@ const ProductFilters = ({
               </div>
 
               <div>
-                <label htmlFor="price-range" className="block text-sm font-medium text-gray-700">Price Range</label>
+                <label htmlFor="price-range" className="block text-sm font-medium text-gray-700">Price Range (₹)</label>
                 <div className="mt-1 flex rounded-md shadow-sm">
                   <div className="relative flex items-stretch flex-grow focus-within:z-10">
                     <Input 
                       type="number" 
                       id="price-min" 
-                      placeholder="Min"
+                      placeholder="Min ₹"
                       value={localFilters.minPrice}
                       onChange={(e) => handleFilterChange("minPrice", e.target.value)}
                       className="rounded-l-md"
@@ -150,7 +151,7 @@ const ProductFilters = ({
                     <Input 
                       type="number" 
                       id="price-max" 
-                      placeholder="Max"
+                      placeholder="Max ₹"
                       value={localFilters.maxPrice}
                       onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
                       className="rounded-r-md"

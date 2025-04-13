@@ -82,7 +82,7 @@ const ProductGrid = ({ searchQuery, filters, sortOption }: ProductGridProps) => 
                     <h3 className="text-sm text-gray-700 font-medium">{product.name}</h3>
                     <p className="mt-1 text-sm text-gray-500">{product.condition} | {product.capacity} kWh</p>
                   </div>
-                  <p className="text-sm font-medium text-gray-900">${product.price.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">₹{product.price.toLocaleString('en-IN')}</p>
                 </div>
                 <div className="mt-2">
                   {product.capacityPercentage && (
