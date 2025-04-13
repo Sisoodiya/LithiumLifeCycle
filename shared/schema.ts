@@ -1,7 +1,8 @@
-import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, jsonb, real, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// User schema
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -13,66 +14,128 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+// Battery condition enum
+export const batteryConditionEnum = pgEnum("battery_condition", [
+  "excellent",
+  "good",
+  "fair",
+  "poor",
+  "damaged"
+]);
+
+// Battery type enum
+export const batteryTypeEnum = pgEnum("battery_type", [
+  "ev_standard",
+  "ev_premium",
+  "hybrid",
+  "energy_storage",
+  "other"
+]);
 
 // Battery schema
 export const batteries = pgTable("batteries", {
   id: serial("id").primaryKey(),
-  batteryType: text("battery_type").notNull(),
-  manufacturer: text("manufacturer").notNull(),
-  modelNumber: text("model_number").notNull(),
-  batteryAge: doublePrecision("battery_age").notNull(),
-  capacity: doublePrecision("capacity").notNull(),
-  condition: text("condition").notNull(),
-  estimatedPrice: doublePrecision("estimated_price"),
+  type: batteryTypeEnum("type").notNull(),
+  model: text("model").notNull(),
+  age: integer("age").notNull(),
+  capacity: real("capacity").notNull(),
+  condition: batteryConditionEnum("condition").notNull(),
+  price: real("price").notNull(),
   userId: integer("user_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertBatterySchema = createInsertSchema(batteries).omit({
   id: true,
-  createdAt: true,
-  estimatedPrice: true,
+  price: true,
   userId: true,
-});
-
-export type InsertBattery = z.infer<typeof insertBatterySchema>;
-export type Battery = typeof batteries.$inferSelect;
-
-// Business inquiry schema
-export const businessInquiries = pgTable("business_inquiries", {
-  id: serial("id").primaryKey(),
-  companyName: text("company_name").notNull(),
-  contactPerson: text("contact_person").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
-  batteryDetails: text("battery_details").notNull(),
-  inquiryType: text("inquiry_type").notNull(), // "sell" or "buy"
-  status: text("status").default("pending").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertBusinessInquirySchema = createInsertSchema(businessInquiries).omit({
-  id: true,
-  status: true,
   createdAt: true,
 });
 
-export type InsertBusinessInquiry = z.infer<typeof insertBusinessInquirySchema>;
-export type BusinessInquiry = typeof businessInquiries.$inferSelect;
+export const batteryPricingSchema = z.object({
+  type: z.enum(["ev_standard", "ev_premium", "hybrid", "energy_storage", "other"]),
+  model: z.string().min(1, "Model is required"),
+  age: z.number().min(0, "Age must be a positive number"),
+  capacity: z.number().min(0, "Capacity must be a positive number"),
+  condition: z.enum(["excellent", "good", "fair", "poor", "damaged"]),
+});
 
-// Government subsidy schema
+// Order schema
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "confirmed",
+  "completed",
+  "cancelled"
+]);
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  batteryId: integer("battery_id").references(() => batteries.id),
+  status: orderStatusEnum("status").default("pending"),
+  price: real("price").notNull(),
+  pickupLocation: text("pickup_location"),
+  isPickup: boolean("is_pickup").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Idea schema for contributions
+export const ideas = pgTable("ideas", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  organization: text("organization").notNull(),
+  orgType: text("org_type").notNull(),
+  contactName: text("contact_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  tags: text("tags").array(),
+  votes: integer("votes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertIdeaSchema = createInsertSchema(ideas).omit({
+  id: true,
+  votes: true,
+  createdAt: true,
+});
+
+// Product schema for marketplace
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull(),
+  price: real("price").notNull(),
+  capacity: real("capacity"),
+  condition: text("condition").notNull(),
+  capacityPercentage: integer("capacity_percentage"),
+  image: text("image").notNull(),
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Subsidy schema
 export const subsidies = pgTable("subsidies", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  region: text("region").notNull(), // federal, state, local
-  type: text("type").notNull(), // tax credit, grant, rebate
-  benefitAmount: text("benefit_amount").notNull(),
-  eligibility: text("eligibility").notNull(),
   description: text("description").notNull(),
-  status: text("status").default("active").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  provider: text("provider").notNull(),
+  category: text("category").notNull(),
+  state: text("state"),
+  eligibility: text("eligibility").notNull(),
+  amount: text("amount"),
+  link: text("link"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertSubsidySchema = createInsertSchema(subsidies).omit({
@@ -80,146 +143,41 @@ export const insertSubsidySchema = createInsertSchema(subsidies).omit({
   createdAt: true,
 });
 
-export type InsertSubsidy = z.infer<typeof insertSubsidySchema>;
-export type Subsidy = typeof subsidies.$inferSelect;
-
-// Contribution schema
-export const contributions = pgTable("contributions", {
-  id: serial("id").primaryKey(),
-  organizationName: text("organization_name").notNull(),
-  organizationType: text("organization_type").notNull(),
-  contactName: text("contact_name").notNull(),
-  contactEmail: text("contact_email").notNull(),
-  contributionType: text("contribution_type").notNull(),
-  details: text("details").notNull(),
-  idea: text("idea"),
-  status: text("status").default("pending").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertContributionSchema = createInsertSchema(contributions).omit({
-  id: true,
-  status: true,
-  createdAt: true,
-});
-
-export type InsertContribution = z.infer<typeof insertContributionSchema>;
-export type Contribution = typeof contributions.$inferSelect;
-
-// Ideas schema
-export const ideas = pgTable("ideas", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  author: text("author").notNull(),
-  organization: text("organization"),
-  tags: text("tags").array(),
-  likes: integer("likes").default(0).notNull(),
-  comments: integer("comments").default(0).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertIdeaSchema = createInsertSchema(ideas).omit({
-  id: true,
-  likes: true,
-  comments: true,
-  createdAt: true,
-});
-
-export type InsertIdea = z.infer<typeof insertIdeaSchema>;
-export type Idea = typeof ideas.$inferSelect;
-
-// Marketplace item schema
-export const marketplaceItems = pgTable("marketplace_items", {
+// Analytics schema
+export const analytics = pgTable("analytics", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  category: text("category").notNull(), // EV batteries, energy storage, components, accessories
-  description: text("description").notNull(),
-  condition: text("condition").notNull(), // excellent, good, fair, poor, new
-  specifications: text("specifications").notNull(),
-  price: doublePrecision("price").notNull(),
-  stock: integer("stock").notNull(),
-  imageUrl: text("image_url"),
-  sellerId: integer("seller_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  value: real("value").notNull(),
+  unit: text("unit"),
+  category: text("category").notNull(),
+  data: jsonb("data"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertMarketplaceItemSchema = createInsertSchema(marketplaceItems).omit({
-  id: true,
-  createdAt: true,
-  sellerId: true,
-});
-
-export type InsertMarketplaceItem = z.infer<typeof insertMarketplaceItemSchema>;
-export type MarketplaceItem = typeof marketplaceItems.$inferSelect;
-
-// Pickup request schema for battery selling
-export const pickupRequests = pgTable("pickup_requests", {
-  id: serial("id").primaryKey(),
-  batteryId: integer("battery_id").references(() => batteries.id).notNull(),
-  address: text("address").notNull(),
-  preferredDate: timestamp("preferred_date").notNull(),
-  deliveryOption: text("delivery_option").notNull(), // pickup or dropoff
-  status: text("status").default("pending").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertPickupRequestSchema = createInsertSchema(pickupRequests).omit({
-  id: true,
-  status: true,
-  createdAt: true,
-});
-
-export type InsertPickupRequest = z.infer<typeof insertPickupRequestSchema>;
-export type PickupRequest = typeof pickupRequests.$inferSelect;
-
-// Newsletter subscribers
-export const newsletterSubscribers = pgTable("newsletter_subscribers", {
-  id: serial("id").primaryKey(),
-  email: text("email").notNull().unique(),
-  topic: text("topic").default("all").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).omit({
+export const insertAnalyticsSchema = createInsertSchema(analytics).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscriberSchema>;
-export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
-// Market Data for analytics
-export const marketData = pgTable("market_data", {
-  id: serial("id").primaryKey(),
-  dataType: text("data_type").notNull(), // recycled_batteries, market_value, resource_recovery
-  value: doublePrecision("value").notNull(),
-  unit: text("unit").notNull(),
-  change: doublePrecision("change"), // percentage change
-  year: integer("year").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export type Battery = typeof batteries.$inferSelect;
+export type InsertBattery = z.infer<typeof insertBatterySchema>;
+export type BatteryPricing = z.infer<typeof batteryPricingSchema>;
 
-export const insertMarketDataSchema = createInsertSchema(marketData).omit({
-  id: true,
-  createdAt: true,
-});
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
 
-export type InsertMarketData = z.infer<typeof insertMarketDataSchema>;
-export type MarketData = typeof marketData.$inferSelect;
+export type Idea = typeof ideas.$inferSelect;
+export type InsertIdea = z.infer<typeof insertIdeaSchema>;
 
-// Chart data for analytics
-export const chartData = pgTable("chart_data", {
-  id: serial("id").primaryKey(),
-  chartType: text("chart_type").notNull(), // market_gap, recovery_rates
-  data: jsonb("data").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
 
-export const insertChartDataSchema = createInsertSchema(chartData).omit({
-  id: true,
-  createdAt: true,
-});
+export type Subsidy = typeof subsidies.$inferSelect;
+export type InsertSubsidy = z.infer<typeof insertSubsidySchema>;
 
-export type InsertChartData = z.infer<typeof insertChartDataSchema>;
-export type ChartData = typeof chartData.$inferSelect;
+export type Analytics = typeof analytics.$inferSelect;
+export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>;

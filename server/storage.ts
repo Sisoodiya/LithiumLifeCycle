@@ -1,654 +1,586 @@
-import {
-  users, batteries, businessInquiries, subsidies, contributions, 
-  ideas, marketplaceItems, pickupRequests, newsletterSubscribers,
-  marketData, chartData,
-  type User, type InsertUser, type Battery, type InsertBattery,
-  type BusinessInquiry, type InsertBusinessInquiry, type Subsidy, 
-  type InsertSubsidy, type Contribution, type InsertContribution,
-  type Idea, type InsertIdea, type MarketplaceItem, type InsertMarketplaceItem,
-  type PickupRequest, type InsertPickupRequest, type NewsletterSubscriber,
-  type InsertNewsletterSubscriber, type MarketData, type InsertMarketData,
-  type ChartData, type InsertChartData
+import { 
+  User, InsertUser, 
+  Battery, InsertBattery, 
+  Order, InsertOrder, 
+  Idea, InsertIdea, 
+  Product, InsertProduct, 
+  Subsidy, InsertSubsidy, 
+  Analytics, InsertAnalytics
 } from "@shared/schema";
 
-// This interface defines all the storage methods needed for our application
 export interface IStorage {
-  // User methods
+  // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-
-  // Battery methods
-  createBattery(battery: InsertBattery & { userId?: number }): Promise<Battery>;
+  
+  // Battery operations
+  createBattery(battery: InsertBattery & { price: number, userId?: number }): Promise<Battery>;
   getBattery(id: number): Promise<Battery | undefined>;
-  getBatteriesByUserId(userId: number): Promise<Battery[]>;
-  getAllBatteries(): Promise<Battery[]>;
-  updateBatteryPrice(id: number, price: number): Promise<Battery | undefined>;
-
-  // Business inquiry methods
-  createBusinessInquiry(inquiry: InsertBusinessInquiry): Promise<BusinessInquiry>;
-  getBusinessInquiries(): Promise<BusinessInquiry[]>;
-  getBusinessInquiry(id: number): Promise<BusinessInquiry | undefined>;
+  getBatteries(): Promise<Battery[]>;
+  getBatteriesByUser(userId: number): Promise<Battery[]>;
   
-  // Subsidy methods
-  createSubsidy(subsidy: InsertSubsidy): Promise<Subsidy>;
-  getSubsidies(): Promise<Subsidy[]>;
-  searchSubsidies(searchTerm: string): Promise<Subsidy[]>;
-  filterSubsidies(region?: string, type?: string): Promise<Subsidy[]>;
-
-  // Contribution methods
-  createContribution(contribution: InsertContribution): Promise<Contribution>;
-  getContributions(): Promise<Contribution[]>;
-
-  // Ideas methods
+  // Order operations
+  createOrder(order: InsertOrder): Promise<Order>;
+  getOrder(id: number): Promise<Order | undefined>;
+  getOrders(): Promise<Order[]>;
+  getOrdersByUser(userId: number): Promise<Order[]>;
+  updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  
+  // Idea operations
   createIdea(idea: InsertIdea): Promise<Idea>;
+  getIdea(id: number): Promise<Idea | undefined>;
   getIdeas(): Promise<Idea[]>;
-  likeIdea(id: number): Promise<Idea | undefined>;
+  voteForIdea(id: number): Promise<Idea | undefined>;
   
-  // Marketplace methods
-  createMarketplaceItem(item: InsertMarketplaceItem & { sellerId?: number }): Promise<MarketplaceItem>;
-  getMarketplaceItems(): Promise<MarketplaceItem[]>;
-  getMarketplaceItem(id: number): Promise<MarketplaceItem | undefined>;
-  searchMarketplaceItems(searchTerm: string): Promise<MarketplaceItem[]>;
-  filterMarketplaceItems(category?: string, condition?: string): Promise<MarketplaceItem[]>;
+  // Product operations
+  createProduct(product: InsertProduct): Promise<Product>;
+  getProduct(id: number): Promise<Product | undefined>;
+  getProducts(): Promise<Product[]>;
+  searchProducts(query: string): Promise<Product[]>;
+  filterProducts(filters: any): Promise<Product[]>;
   
-  // Pickup request methods
-  createPickupRequest(request: InsertPickupRequest): Promise<PickupRequest>;
-  getPickupRequestsByBatteryId(batteryId: number): Promise<PickupRequest[]>;
+  // Subsidy operations
+  createSubsidy(subsidy: InsertSubsidy): Promise<Subsidy>;
+  getSubsidy(id: number): Promise<Subsidy | undefined>;
+  getSubsidies(): Promise<Subsidy[]>;
+  getSubsidiesByState(state: string): Promise<Subsidy[]>;
+  getSubsidiesByCategory(category: string): Promise<Subsidy[]>;
   
-  // Newsletter subscriber methods
-  addNewsletterSubscriber(subscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber>;
-  
-  // Market data methods
-  getMarketData(): Promise<MarketData[]>;
-  getMarketDataByType(type: string): Promise<MarketData[]>;
-  addMarketData(data: InsertMarketData): Promise<MarketData>;
-  
-  // Chart data methods
-  getChartData(type: string): Promise<ChartData | undefined>;
-  addChartData(data: InsertChartData): Promise<ChartData>;
+  // Analytics operations
+  createAnalytics(analytics: InsertAnalytics): Promise<Analytics>;
+  getAnalytics(category: string): Promise<Analytics[]>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private batteries: Map<number, Battery>;
-  private businessInquiries: Map<number, BusinessInquiry>;
-  private subsidies: Map<number, Subsidy>;
-  private contributions: Map<number, Contribution>;
+  private orders: Map<number, Order>;
   private ideas: Map<number, Idea>;
-  private marketplaceItems: Map<number, MarketplaceItem>;
-  private pickupRequests: Map<number, PickupRequest>;
-  private newsletterSubscribers: Map<number, NewsletterSubscriber>;
-  private marketDataItems: Map<number, MarketData>;
-  private chartDataItems: Map<number, ChartData>;
+  private products: Map<number, Product>;
+  private subsidies: Map<number, Subsidy>;
+  private analytics: Map<number, Analytics>;
   
-  private currentUserId: number;
-  private currentBatteryId: number;
-  private currentBusinessInquiryId: number;
-  private currentSubsidyId: number;
-  private currentContributionId: number;
-  private currentIdeaId: number;
-  private currentMarketplaceItemId: number;
-  private currentPickupRequestId: number;
-  private currentNewsletterSubscriberId: number;
-  private currentMarketDataId: number;
-  private currentChartDataId: number;
-
+  private userId: number;
+  private batteryId: number;
+  private orderId: number;
+  private ideaId: number;
+  private productId: number;
+  private subsidyId: number;
+  private analyticsId: number;
+  
   constructor() {
     this.users = new Map();
     this.batteries = new Map();
-    this.businessInquiries = new Map();
-    this.subsidies = new Map();
-    this.contributions = new Map();
+    this.orders = new Map();
     this.ideas = new Map();
-    this.marketplaceItems = new Map();
-    this.pickupRequests = new Map();
-    this.newsletterSubscribers = new Map();
-    this.marketDataItems = new Map();
-    this.chartDataItems = new Map();
+    this.products = new Map();
+    this.subsidies = new Map();
+    this.analytics = new Map();
     
-    this.currentUserId = 1;
-    this.currentBatteryId = 1;
-    this.currentBusinessInquiryId = 1;
-    this.currentSubsidyId = 1;
-    this.currentContributionId = 1;
-    this.currentIdeaId = 1;
-    this.currentMarketplaceItemId = 1;
-    this.currentPickupRequestId = 1;
-    this.currentNewsletterSubscriberId = 1;
-    this.currentMarketDataId = 1;
-    this.currentChartDataId = 1;
-
-    // Initialize with some market data for the home page
-    this.seedMarketData();
-    this.seedChartData();
-    this.seedSubsidies();
-    this.seedIdeas();
-    this.seedMarketplaceItems();
+    this.userId = 1;
+    this.batteryId = 1;
+    this.orderId = 1;
+    this.ideaId = 1;
+    this.productId = 1;
+    this.subsidyId = 1;
+    this.analyticsId = 1;
+    
+    this.initializeData();
   }
+  
+  private initializeData() {
+    // Create sample analytics data
+    this.createAnalytics({
+      name: "Annual Growth",
+      value: 24.8,
+      unit: "%",
+      category: "growth",
+      data: {
+        years: ["2019", "2020", "2021", "2022", "2023"],
+        values: [10.2, 14.5, 18.3, 22.1, 24.8]
+      }
+    });
+    
+    this.createAnalytics({
+      name: "CO₂ Reduction",
+      value: 142000,
+      unit: "tons",
+      category: "environment",
+      data: {
+        batteryTypes: ["EV Standard", "EV Premium", "Hybrid", "Energy Storage", "Other"],
+        values: [68000, 42000, 18000, 10000, 4000]
+      }
+    });
+    
+    this.createAnalytics({
+      name: "Materials Recovered",
+      value: 18300,
+      unit: "tons",
+      category: "materials",
+      data: {
+        materials: ["Lithium", "Cobalt", "Nickel", "Copper", "Aluminum", "Other"],
+        values: [3660, 4575, 5490, 2745, 1830, 0]
+      }
+    });
 
-  // User methods
+    // Create sample marketplace products
+    const productImages = [
+      "https://images.unsplash.com/photo-1593941707882-a5bba53aaf95",
+      "https://images.unsplash.com/photo-1558620473-e3e0e5584397",
+      "https://images.unsplash.com/photo-1618317437869-df0e87bc1cee",
+      "https://images.unsplash.com/photo-1597347316205-36f6c451902a",
+      "https://images.unsplash.com/photo-1529310399831-ed472b81d589",
+      "https://images.unsplash.com/photo-1622825457752-53745df9c606",
+      "https://images.unsplash.com/photo-1599689444589-133726279f75",
+      "https://images.unsplash.com/photo-1547027248-4534b9d2d28f"
+    ];
+
+    const products = [
+      {
+        name: "Tesla Model S Battery Module",
+        description: "Refurbished Tesla Model S battery module in excellent condition, perfect for DIY energy projects",
+        type: "EV Battery",
+        price: 1200,
+        capacity: 5.3,
+        condition: "Refurbished (Grade A)",
+        capacityPercentage: 85,
+        tags: ["Tesla", "EV", "Module"]
+      },
+      {
+        name: "Nissan Leaf Battery Pack",
+        description: "Complete battery pack from a Nissan Leaf with good capacity retention",
+        type: "EV Battery",
+        price: 3500,
+        capacity: 24,
+        condition: "Refurbished (Grade B)",
+        capacityPercentage: 72,
+        tags: ["Nissan", "EV", "Complete Pack"]
+      },
+      {
+        name: "Home Energy Storage System",
+        description: "Complete home energy storage system built with recycled EV battery materials",
+        type: "Energy Storage",
+        price: 4800,
+        capacity: 13.5,
+        condition: "New (Recycled Materials)",
+        capacityPercentage: 100,
+        tags: ["Storage", "Home", "Complete System"]
+      },
+      {
+        name: "Recycled Lithium Cells (18650)",
+        description: "Pack of 100 tested and sorted 18650 lithium cells from recycled battery packs",
+        type: "Cells",
+        price: 225,
+        capacity: 0.1,
+        condition: "Tested & Sorted",
+        capacityPercentage: 80,
+        tags: ["DIY", "18650", "Cells"]
+      },
+      {
+        name: "EV Charger with Battery Backup",
+        description: "Level 2 EV charger with integrated battery backup for power outages",
+        type: "Charger",
+        price: 2750,
+        capacity: 9.6,
+        condition: "Refurbished",
+        capacityPercentage: 90,
+        tags: ["Charger", "Backup", "Level 2"]
+      },
+      {
+        name: "Chevy Volt Battery Modules",
+        description: "Individual battery modules from a Chevy Volt, ideal for solar storage projects",
+        type: "EV Battery",
+        price: 425,
+        capacity: 2,
+        condition: "Tested & Certified",
+        capacityPercentage: 80,
+        tags: ["Chevy", "Module", "Solar"]
+      },
+      {
+        name: "Solar Generator with Recycled Battery",
+        description: "Portable solar generator using recycled EV battery cells with included 100W panel",
+        type: "Portable",
+        price: 1150,
+        capacity: 2,
+        condition: "New (Recycled Materials)",
+        capacityPercentage: 100,
+        tags: ["Solar", "Portable", "Generator"]
+      },
+      {
+        name: "E-Bike Kit w/ Recycled Battery",
+        description: "Complete e-bike conversion kit including motor and recycled battery pack",
+        type: "E-Bike",
+        price: 685,
+        capacity: 0.48,
+        condition: "New (Recycled Materials)",
+        capacityPercentage: 100,
+        tags: ["E-Bike", "Conversion", "Kit"]
+      }
+    ];
+
+    products.forEach((product, index) => {
+      this.createProduct({
+        ...product,
+        image: productImages[index % productImages.length]
+      });
+    });
+
+    // Create sample ideas
+    this.createIdea({
+      title: "Rural Energy Storage",
+      description: "Creating battery storage systems using recycled EV batteries to provide reliable electricity in rural villages without consistent grid access.",
+      organization: "GreenEnergy Foundation",
+      orgType: "Non-profit Organization",
+      contactName: "Alex Green",
+      contactEmail: "alex@greenenergy.org",
+      tags: ["Energy", "Rural"]
+    });
+
+    this.createIdea({
+      title: "Educational Workshops",
+      description: "Developing hands-on workshops for schools to teach students about battery technology, recycling processes, and sustainable energy.",
+      organization: "TechEd Institute",
+      orgType: "Educational Institution",
+      contactName: "Maria Rodriguez",
+      contactEmail: "maria@teched.edu",
+      tags: ["Education", "Youth"]
+    });
+
+    this.createIdea({
+      title: "Disaster Response Power",
+      description: "Deploying mobile power stations using recycled batteries to provide emergency electricity during natural disasters and power outages.",
+      organization: "Emergency Relief Network",
+      orgType: "Non-profit Organization",
+      contactName: "John Thompson",
+      contactEmail: "john@emergencyrelief.org",
+      tags: ["Emergency", "Community"]
+    });
+
+    // Create sample subsidies
+    const federalSubsidies = [
+      {
+        title: "EV Tax Credit",
+        description: "Up to $7,500 tax credit for new electric vehicle purchases based on battery capacity and domestic content.",
+        provider: "Federal Government",
+        category: "Federal Incentives",
+        eligibility: "Individual taxpayers purchasing new qualified electric vehicles",
+        amount: "Up to $7,500",
+        link: "https://www.irs.gov/credits-deductions/credits-for-new-clean-vehicles-purchased-in-2023-or-after"
+      },
+      {
+        title: "Inflation Reduction Act",
+        description: "Expanded incentives for EV manufacturers using recycled battery materials in production.",
+        provider: "Federal Government",
+        category: "Federal Incentives",
+        eligibility: "EV manufacturers",
+        amount: "Variable",
+        link: "https://www.whitehouse.gov/cleanenergy/inflation-reduction-act-guidebook/"
+      },
+      {
+        title: "Battery Research Grants",
+        description: "Department of Energy funding for advanced recycling technology development.",
+        provider: "Department of Energy",
+        category: "Federal Incentives",
+        eligibility: "Research institutions and companies",
+        amount: "$10M-$50M",
+        link: "https://www.energy.gov/eere/vehicles/battery-recycling-prize"
+      }
+    ];
+
+    federalSubsidies.forEach(subsidy => {
+      this.createSubsidy(subsidy);
+    });
+
+    const stateSubsidies = [
+      {
+        title: "California CALeVIP",
+        description: "Rebates for EV charger installation and battery recycling infrastructure.",
+        provider: "California Energy Commission",
+        category: "State & Local Programs",
+        state: "California",
+        eligibility: "Businesses and property owners",
+        amount: "Up to $80,000 per charger",
+        link: "https://calevip.org/"
+      },
+      {
+        title: "New York Drive Clean",
+        description: "Rebates up to $2,000 for new EV purchases and incentives for battery recycling.",
+        provider: "NYSERDA",
+        category: "State & Local Programs",
+        state: "New York",
+        eligibility: "New York residents",
+        amount: "Up to $2,000",
+        link: "https://www.nyserda.ny.gov/All-Programs/Drive-Clean-Rebate"
+      },
+      {
+        title: "Texas Emissions Reduction",
+        description: "Grants for businesses implementing battery recycling programs.",
+        provider: "Texas Commission on Environmental Quality",
+        category: "State & Local Programs",
+        state: "Texas",
+        eligibility: "Texas businesses",
+        amount: "Up to $100,000",
+        link: "https://www.tceq.texas.gov/airquality/terp"
+      }
+    ];
+
+    stateSubsidies.forEach(subsidy => {
+      this.createSubsidy(subsidy);
+    });
+
+    const utilitySubsidies = [
+      {
+        title: "Energy Storage Rebates",
+        description: "Incentives for using second-life batteries for home energy storage systems.",
+        provider: "Various Utilities",
+        category: "Utility Incentives",
+        eligibility: "Residential customers",
+        amount: "$500-$5,000",
+        link: "#"
+      },
+      {
+        title: "Off-Peak Charging Discounts",
+        description: "Special EV charging rates during off-peak hours from participating utilities.",
+        provider: "Various Utilities",
+        category: "Utility Incentives",
+        eligibility: "EV owners",
+        amount: "Up to 50% off standard rates",
+        link: "#"
+      },
+      {
+        title: "Grid Service Programs",
+        description: "Payments for allowing utility control of battery discharge during peak demand.",
+        provider: "Various Utilities",
+        category: "Utility Incentives",
+        eligibility: "Battery owners",
+        amount: "$50-$200 per month",
+        link: "#"
+      }
+    ];
+
+    utilitySubsidies.forEach(subsidy => {
+      this.createSubsidy(subsidy);
+    });
+  }
+  
+  // User operations
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
-
+  
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
       (user) => user.username === username,
     );
   }
-
+  
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
+    const id = this.userId++;
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
     return user;
   }
-
-  // Battery methods
-  async createBattery(battery: InsertBattery & { userId?: number }): Promise<Battery> {
-    const id = this.currentBatteryId++;
-    const newBattery: Battery = {
-      ...battery,
-      id,
-      estimatedPrice: null,
-      userId: battery.userId || null,
-      createdAt: new Date(),
+  
+  // Battery operations
+  async createBattery(battery: InsertBattery & { price: number, userId?: number }): Promise<Battery> {
+    const id = this.batteryId++;
+    const now = new Date();
+    const newBattery: Battery = { 
+      ...battery, 
+      id, 
+      createdAt: now 
     };
     this.batteries.set(id, newBattery);
     return newBattery;
   }
-
+  
   async getBattery(id: number): Promise<Battery | undefined> {
     return this.batteries.get(id);
   }
-
-  async getBatteriesByUserId(userId: number): Promise<Battery[]> {
-    return Array.from(this.batteries.values()).filter(
-      battery => battery.userId === userId
-    );
-  }
-
-  async getAllBatteries(): Promise<Battery[]> {
+  
+  async getBatteries(): Promise<Battery[]> {
     return Array.from(this.batteries.values());
   }
-
-  async updateBatteryPrice(id: number, price: number): Promise<Battery | undefined> {
-    const battery = this.batteries.get(id);
-    if (!battery) return undefined;
-    
-    const updatedBattery = {...battery, estimatedPrice: price};
-    this.batteries.set(id, updatedBattery);
-    return updatedBattery;
-  }
-
-  // Business inquiry methods
-  async createBusinessInquiry(inquiry: InsertBusinessInquiry): Promise<BusinessInquiry> {
-    const id = this.currentBusinessInquiryId++;
-    const newInquiry: BusinessInquiry = {
-      ...inquiry,
-      id,
-      status: "pending",
-      createdAt: new Date(),
-    };
-    this.businessInquiries.set(id, newInquiry);
-    return newInquiry;
-  }
-
-  async getBusinessInquiries(): Promise<BusinessInquiry[]> {
-    return Array.from(this.businessInquiries.values());
-  }
-
-  async getBusinessInquiry(id: number): Promise<BusinessInquiry | undefined> {
-    return this.businessInquiries.get(id);
-  }
-
-  // Subsidy methods
-  async createSubsidy(subsidy: InsertSubsidy): Promise<Subsidy> {
-    const id = this.currentSubsidyId++;
-    const newSubsidy: Subsidy = {
-      ...subsidy,
-      id,
-      createdAt: new Date(),
-    };
-    this.subsidies.set(id, newSubsidy);
-    return newSubsidy;
-  }
-
-  async getSubsidies(): Promise<Subsidy[]> {
-    return Array.from(this.subsidies.values());
-  }
-
-  async searchSubsidies(searchTerm: string): Promise<Subsidy[]> {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return Array.from(this.subsidies.values()).filter(subsidy => 
-      subsidy.title.toLowerCase().includes(lowerCaseSearchTerm) ||
-      subsidy.description.toLowerCase().includes(lowerCaseSearchTerm) ||
-      subsidy.eligibility.toLowerCase().includes(lowerCaseSearchTerm)
+  
+  async getBatteriesByUser(userId: number): Promise<Battery[]> {
+    return Array.from(this.batteries.values()).filter(
+      (battery) => battery.userId === userId,
     );
   }
-
-  async filterSubsidies(region?: string, type?: string): Promise<Subsidy[]> {
-    let filteredSubsidies = Array.from(this.subsidies.values());
-    
-    if (region) {
-      filteredSubsidies = filteredSubsidies.filter(
-        subsidy => subsidy.region === region
-      );
-    }
-    
-    if (type) {
-      filteredSubsidies = filteredSubsidies.filter(
-        subsidy => subsidy.type === type
-      );
-    }
-    
-    return filteredSubsidies;
+  
+  // Order operations
+  async createOrder(order: InsertOrder): Promise<Order> {
+    const id = this.orderId++;
+    const now = new Date();
+    const newOrder: Order = { ...order, id, createdAt: now };
+    this.orders.set(id, newOrder);
+    return newOrder;
   }
-
-  // Contribution methods
-  async createContribution(contribution: InsertContribution): Promise<Contribution> {
-    const id = this.currentContributionId++;
-    const newContribution: Contribution = {
-      ...contribution,
-      id,
-      status: "pending",
-      createdAt: new Date(),
-    };
-    this.contributions.set(id, newContribution);
-    return newContribution;
+  
+  async getOrder(id: number): Promise<Order | undefined> {
+    return this.orders.get(id);
   }
-
-  async getContributions(): Promise<Contribution[]> {
-    return Array.from(this.contributions.values());
+  
+  async getOrders(): Promise<Order[]> {
+    return Array.from(this.orders.values());
   }
-
-  // Ideas methods
+  
+  async getOrdersByUser(userId: number): Promise<Order[]> {
+    return Array.from(this.orders.values()).filter(
+      (order) => order.userId === userId,
+    );
+  }
+  
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+    
+    const updatedOrder: Order = { ...order, status: status as any };
+    this.orders.set(id, updatedOrder);
+    return updatedOrder;
+  }
+  
+  // Idea operations
   async createIdea(idea: InsertIdea): Promise<Idea> {
-    const id = this.currentIdeaId++;
-    const newIdea: Idea = {
-      ...idea,
-      id,
-      likes: 0,
-      comments: 0,
-      createdAt: new Date(),
-    };
+    const id = this.ideaId++;
+    const now = new Date();
+    const newIdea: Idea = { ...idea, id, votes: 0, createdAt: now };
     this.ideas.set(id, newIdea);
     return newIdea;
   }
-
+  
+  async getIdea(id: number): Promise<Idea | undefined> {
+    return this.ideas.get(id);
+  }
+  
   async getIdeas(): Promise<Idea[]> {
     return Array.from(this.ideas.values());
   }
-
-  async likeIdea(id: number): Promise<Idea | undefined> {
+  
+  async voteForIdea(id: number): Promise<Idea | undefined> {
     const idea = this.ideas.get(id);
     if (!idea) return undefined;
     
-    const updatedIdea = {...idea, likes: idea.likes + 1};
+    const updatedIdea: Idea = { ...idea, votes: idea.votes + 1 };
     this.ideas.set(id, updatedIdea);
     return updatedIdea;
   }
-
-  // Marketplace methods
-  async createMarketplaceItem(item: InsertMarketplaceItem & { sellerId?: number }): Promise<MarketplaceItem> {
-    const id = this.currentMarketplaceItemId++;
-    const newItem: MarketplaceItem = {
-      ...item,
-      id,
-      sellerId: item.sellerId || null,
-      createdAt: new Date(),
-    };
-    this.marketplaceItems.set(id, newItem);
-    return newItem;
+  
+  // Product operations
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const id = this.productId++;
+    const now = new Date();
+    const newProduct: Product = { ...product, id, createdAt: now };
+    this.products.set(id, newProduct);
+    return newProduct;
   }
-
-  async getMarketplaceItems(): Promise<MarketplaceItem[]> {
-    return Array.from(this.marketplaceItems.values());
+  
+  async getProduct(id: number): Promise<Product | undefined> {
+    return this.products.get(id);
   }
-
-  async getMarketplaceItem(id: number): Promise<MarketplaceItem | undefined> {
-    return this.marketplaceItems.get(id);
+  
+  async getProducts(): Promise<Product[]> {
+    return Array.from(this.products.values());
   }
-
-  async searchMarketplaceItems(searchTerm: string): Promise<MarketplaceItem[]> {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return Array.from(this.marketplaceItems.values()).filter(item => 
-      item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.description.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.specifications.toLowerCase().includes(lowerCaseSearchTerm)
+  
+  async searchProducts(query: string): Promise<Product[]> {
+    if (!query) return this.getProducts();
+    
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.products.values()).filter(
+      (product) => 
+        product.name.toLowerCase().includes(lowerQuery) ||
+        product.description.toLowerCase().includes(lowerQuery) ||
+        product.type.toLowerCase().includes(lowerQuery) ||
+        product.condition.toLowerCase().includes(lowerQuery) ||
+        (product.tags && product.tags.some(tag => tag.toLowerCase().includes(lowerQuery)))
     );
   }
-
-  async filterMarketplaceItems(category?: string, condition?: string): Promise<MarketplaceItem[]> {
-    let filteredItems = Array.from(this.marketplaceItems.values());
+  
+  async filterProducts(filters: any): Promise<Product[]> {
+    let products = Array.from(this.products.values());
     
-    if (category) {
-      filteredItems = filteredItems.filter(
-        item => item.category === category
-      );
+    if (filters.type && filters.type !== "All Types") {
+      products = products.filter(p => p.type === filters.type);
     }
     
-    if (condition) {
-      filteredItems = filteredItems.filter(
-        item => item.condition === condition
-      );
+    if (filters.condition && filters.condition !== "All Conditions") {
+      products = products.filter(p => p.condition === filters.condition);
     }
     
-    return filteredItems;
-  }
-
-  // Pickup request methods
-  async createPickupRequest(request: InsertPickupRequest): Promise<PickupRequest> {
-    const id = this.currentPickupRequestId++;
-    const newRequest: PickupRequest = {
-      ...request,
-      id,
-      status: "pending",
-      createdAt: new Date(),
-    };
-    this.pickupRequests.set(id, newRequest);
-    return newRequest;
-  }
-
-  async getPickupRequestsByBatteryId(batteryId: number): Promise<PickupRequest[]> {
-    return Array.from(this.pickupRequests.values()).filter(
-      request => request.batteryId === batteryId
-    );
-  }
-
-  // Newsletter subscriber methods
-  async addNewsletterSubscriber(subscriber: InsertNewsletterSubscriber): Promise<NewsletterSubscriber> {
-    // Check if email already exists
-    const existingSubscriber = Array.from(this.newsletterSubscribers.values()).find(
-      sub => sub.email === subscriber.email
-    );
-    
-    if (existingSubscriber) {
-      return existingSubscriber;
+    if (filters.minPrice) {
+      products = products.filter(p => p.price >= filters.minPrice);
     }
     
-    const id = this.currentNewsletterSubscriberId++;
-    const newSubscriber: NewsletterSubscriber = {
-      ...subscriber,
-      id,
-      createdAt: new Date(),
-    };
-    this.newsletterSubscribers.set(id, newSubscriber);
-    return newSubscriber;
+    if (filters.maxPrice) {
+      products = products.filter(p => p.price <= filters.maxPrice);
+    }
+    
+    if (filters.capacity && filters.capacity !== "All Capacities") {
+      // Handle capacity filtering based on selected range
+      if (filters.capacity === "Small (< 20 kWh)") {
+        products = products.filter(p => p.capacity && p.capacity < 20);
+      } else if (filters.capacity === "Medium (20-60 kWh)") {
+        products = products.filter(p => p.capacity && p.capacity >= 20 && p.capacity <= 60);
+      } else if (filters.capacity === "Large (60-100 kWh)") {
+        products = products.filter(p => p.capacity && p.capacity > 60 && p.capacity <= 100);
+      } else if (filters.capacity === "Industrial (> 100 kWh)") {
+        products = products.filter(p => p.capacity && p.capacity > 100);
+      }
+    }
+    
+    return products;
   }
-
-  // Market data methods
-  async getMarketData(): Promise<MarketData[]> {
-    return Array.from(this.marketDataItems.values());
+  
+  // Subsidy operations
+  async createSubsidy(subsidy: InsertSubsidy): Promise<Subsidy> {
+    const id = this.subsidyId++;
+    const now = new Date();
+    const newSubsidy: Subsidy = { ...subsidy, id, createdAt: now };
+    this.subsidies.set(id, newSubsidy);
+    return newSubsidy;
   }
-
-  async getMarketDataByType(type: string): Promise<MarketData[]> {
-    return Array.from(this.marketDataItems.values()).filter(
-      data => data.dataType === type
+  
+  async getSubsidy(id: number): Promise<Subsidy | undefined> {
+    return this.subsidies.get(id);
+  }
+  
+  async getSubsidies(): Promise<Subsidy[]> {
+    return Array.from(this.subsidies.values());
+  }
+  
+  async getSubsidiesByState(state: string): Promise<Subsidy[]> {
+    if (!state || state === "Select state") return this.getSubsidies();
+    
+    return Array.from(this.subsidies.values()).filter(
+      (subsidy) => subsidy.state === state
     );
   }
-
-  async addMarketData(data: InsertMarketData): Promise<MarketData> {
-    const id = this.currentMarketDataId++;
-    const newData: MarketData = {
-      ...data,
-      id,
-      createdAt: new Date(),
-    };
-    this.marketDataItems.set(id, newData);
-    return newData;
-  }
-
-  // Chart data methods
-  async getChartData(type: string): Promise<ChartData | undefined> {
-    return Array.from(this.chartDataItems.values()).find(
-      data => data.chartType === type
+  
+  async getSubsidiesByCategory(category: string): Promise<Subsidy[]> {
+    if (!category || category === "All incentives") return this.getSubsidies();
+    
+    return Array.from(this.subsidies.values()).filter(
+      (subsidy) => subsidy.category === category
     );
   }
-
-  async addChartData(data: InsertChartData): Promise<ChartData> {
-    const id = this.currentChartDataId++;
-    const newData: ChartData = {
-      ...data,
-      id,
-      createdAt: new Date(),
-    };
-    this.chartDataItems.set(id, newData);
-    return newData;
+  
+  // Analytics operations
+  async createAnalytics(analytics: InsertAnalytics): Promise<Analytics> {
+    const id = this.analyticsId++;
+    const now = new Date();
+    const newAnalytics: Analytics = { ...analytics, id, createdAt: now };
+    this.analytics.set(id, newAnalytics);
+    return newAnalytics;
   }
-
-  // Seed methods to provide initial data
-  private seedMarketData() {
-    const marketDataItems = [
-      {
-        dataType: "recycled_batteries",
-        value: 14253,
-        unit: "units",
-        change: 23.5,
-        year: 2023,
-      },
-      {
-        dataType: "market_value",
-        value: 84.2,
-        unit: "million USD",
-        change: 18.3,
-        year: 2023,
-      },
-      {
-        dataType: "resource_recovery",
-        value: 5842,
-        unit: "kg",
-        change: 31.2,
-        year: 2023,
-      }
-    ];
-
-    marketDataItems.forEach(item => {
-      this.addMarketData(item);
-    });
-  }
-
-  private seedChartData() {
-    // Market gap chart data
-    const marketGapData = {
-      chartType: "market_gap",
-      data: {
-        labels: ['2018', '2019', '2020', '2021', '2022', '2023', '2024 (Projected)'],
-        datasets: [
-          {
-            label: 'EV Battery Demand',
-            data: [120, 190, 300, 450, 620, 800, 950],
-            borderColor: '#3B82F6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          },
-          {
-            label: 'Battery Supply',
-            data: [100, 150, 230, 380, 500, 650, 720],
-            borderColor: '#F59E0B',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-          }
-        ]
-      }
-    };
-
-    // Recovery rates chart data
-    const recoveryRatesData = {
-      chartType: "recovery_rates",
-      data: {
-        labels: ['Lithium', 'Cobalt', 'Nickel', 'Manganese', 'Copper', 'Aluminum'],
-        datasets: [
-          {
-            label: 'Traditional Methods',
-            data: [30, 60, 55, 40, 75, 80],
-            backgroundColor: 'rgba(107, 114, 128, 0.7)',
-          },
-          {
-            label: 'Our Technology',
-            data: [85, 92, 88, 75, 95, 97],
-            backgroundColor: 'rgba(16, 185, 129, 0.7)',
-          }
-        ]
-      }
-    };
-
-    this.addChartData(marketGapData);
-    this.addChartData(recoveryRatesData);
-  }
-
-  private seedSubsidies() {
-    const subsidiesData = [
-      {
-        title: "Federal Electric Vehicle Tax Credit",
-        region: "federal",
-        type: "tax",
-        benefitAmount: "Up to $7,500",
-        eligibility: "New electric vehicles purchased after January 1, 2023",
-        description: "Tax credit for purchasing new qualified plug-in electric drive motor vehicles, including passenger vehicles and light trucks. Credit amount depends on battery capacity and other factors.",
-        status: "active"
-      },
-      {
-        title: "Battery Recycling Infrastructure Grant",
-        region: "state",
-        type: "grant",
-        benefitAmount: "Up to $500,000",
-        eligibility: "Businesses establishing battery recycling facilities",
-        description: "Grants for businesses and organizations establishing or expanding lithium-ion battery recycling infrastructure. Covers up to 50% of eligible costs for equipment, facilities, and technology implementation.",
-        status: "active"
-      },
-      {
-        title: "Energy Storage Rebate Program",
-        region: "local",
-        type: "rebate",
-        benefitAmount: "$0.25/Wh, up to $5,000",
-        eligibility: "Residential and commercial energy storage installations",
-        description: "Rebates for installing energy storage systems, including those using recycled lithium-ion batteries. Promotes second-life applications for EV batteries and increases grid resilience.",
-        status: "active"
-      }
-    ];
-
-    subsidiesData.forEach(subsidy => {
-      this.createSubsidy(subsidy);
-    });
-  }
-
-  private seedIdeas() {
-    const ideasData = [
-      {
-        title: "Battery Storage Microgrids for Rural Communities",
-        description: "Creating microgrids using repurposed EV batteries to provide reliable electricity to rural communities. This would address energy poverty while extending battery life cycles.",
-        author: "Sarah Johnson",
-        organization: "GreenTech Solutions",
-        tags: ["Energy Access", "Second-Life"]
-      },
-      {
-        title: "Mobile Battery Diagnostic Labs",
-        description: "Deploying mobile diagnostic labs that can visit communities to assess, repair, and collect batteries. This would increase collection rates in areas with limited recycling infrastructure.",
-        author: "Michael Chen",
-        organization: "CleanEnergy Institute",
-        tags: ["Infrastructure", "Collection"]
-      },
-      {
-        title: "Educational Battery Recycling Program",
-        description: "Developing educational programs for schools to teach students about battery recycling and sustainable energy. Includes hands-on workshops and collection drives.",
-        author: "Elena Rodriguez",
-        organization: "Sustainable Future NGO",
-        tags: ["Education", "Community"]
-      }
-    ];
-
-    ideasData.forEach(idea => {
-      this.createIdea(idea);
-    });
-  }
-
-  private seedMarketplaceItems() {
-    const marketplaceItemsData = [
-      {
-        name: "Tesla Model S Battery Pack",
-        category: "ev-batteries",
-        description: "Used Tesla Model S battery pack in excellent condition",
-        condition: "excellent",
-        specifications: "85 kWh | 90% Capacity",
-        price: 3500,
-        stock: 5,
-        imageUrl: "https://images.unsplash.com/photo-1593941707882-a5bba53b0998?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Nissan Leaf Battery Module",
-        category: "ev-batteries",
-        description: "Used Nissan Leaf battery module, good condition",
-        condition: "good",
-        specifications: "24 kWh | 75% Capacity",
-        price: 1200,
-        stock: 12,
-        imageUrl: "https://images.unsplash.com/photo-1585952055991-ead699bf8480?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Home Energy Storage System",
-        category: "energy-storage",
-        description: "Refurbished home energy storage system",
-        condition: "excellent",
-        specifications: "10 kWh | Refurbished",
-        price: 4200,
-        stock: 3,
-        imageUrl: "https://images.unsplash.com/photo-1603506731425-3ebb9f442c85?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Electric Bike Battery Pack",
-        category: "ev-batteries",
-        description: "Used e-bike battery in fair condition",
-        condition: "fair",
-        specifications: "48V 15Ah | 55% Capacity",
-        price: 250,
-        stock: 8,
-        imageUrl: "https://images.unsplash.com/photo-1561316441-efd0c9a356e4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Battery Management System",
-        category: "components",
-        description: "New universal battery management system",
-        condition: "new",
-        specifications: "Universal | 100A max",
-        price: 350,
-        stock: 15,
-        imageUrl: "https://images.unsplash.com/photo-1558428808-c8bf12580413?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Solar Battery Combo Kit",
-        category: "energy-storage",
-        description: "Solar panel and battery storage combo kit",
-        condition: "good",
-        specifications: "5 kWh | Solar panels included",
-        price: 2800,
-        stock: 2,
-        imageUrl: "https://images.unsplash.com/photo-1612708771321-1cee78462161?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Portable Power Station",
-        category: "energy-storage",
-        description: "Portable power station with lithium battery",
-        condition: "excellent",
-        specifications: "1.5 kWh | 2000W inverter",
-        price: 950,
-        stock: 7,
-        imageUrl: "https://images.unsplash.com/photo-1611274294780-13c87a3ebc7e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      },
-      {
-        name: "Battery Testing Equipment",
-        category: "accessories",
-        description: "Professional grade battery testing equipment",
-        condition: "new",
-        specifications: "Professional grade | Calibrated",
-        price: 480,
-        stock: 4,
-        imageUrl: "https://images.unsplash.com/photo-1594818898109-44704fb548f6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&h=600&q=80"
-      }
-    ];
-
-    marketplaceItemsData.forEach(item => {
-      this.createMarketplaceItem(item);
-    });
+  
+  async getAnalytics(category?: string): Promise<Analytics[]> {
+    if (!category) return Array.from(this.analytics.values());
+    
+    return Array.from(this.analytics.values()).filter(
+      (analytics) => analytics.category === category
+    );
   }
 }
 
