@@ -15,12 +15,12 @@ type FinderProps = {
 const SubsidyFinder = () => {
   const [finderParams, setFinderParams] = useState<FinderProps>({
     entityType: "Individual",
-    state: "",
-    incentiveType: ""
+    state: "all",
+    incentiveType: "all"
   });
   const [hasSearched, setHasSearched] = useState(false);
 
-  const { data: subsidies, isLoading, refetch } = useQuery({
+  const { data: subsidies, isLoading, refetch } = useQuery<any[]>({
     queryKey: ["/api/subsidies", finderParams.state, finderParams.incentiveType],
     enabled: false
   });
@@ -33,7 +33,7 @@ const SubsidyFinder = () => {
   ];
 
   const incentiveTypes = [
-    { value: "", label: "All incentives" },
+    { value: "all", label: "All incentives" },
     { value: "Central Government Schemes", label: "Central Government Schemes" },
     { value: "State & Local Programs", label: "State & Local Programs" },
     { value: "Utility Incentives", label: "Utility Incentives" },
@@ -84,7 +84,7 @@ const SubsidyFinder = () => {
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All states</SelectItem>
+                  <SelectItem value="all">All states</SelectItem>
                   {states.map((state) => (
                     <SelectItem key={state} value={state}>{state}</SelectItem>
                   ))}

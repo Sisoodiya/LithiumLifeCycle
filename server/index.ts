@@ -57,7 +57,7 @@ app.use((req, res, next) => {
   }
 
   // Port setup and starting the server
-  const port = 5000;
+  const port = 3000;
   console.log("📡 About to start server...");
 
   server.listen(port, () => {

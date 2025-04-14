@@ -177,9 +177,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const category = req.query.category as string;
       
       let subsidies;
-      if (state) {
+      if (state && state !== 'all') {
         subsidies = await storage.getSubsidiesByState(state);
-      } else if (category) {
+      } else if (category && category !== 'all') {
         subsidies = await storage.getSubsidiesByCategory(category);
       } else {
         subsidies = await storage.getSubsidies();
