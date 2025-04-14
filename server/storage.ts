@@ -49,7 +49,7 @@ export interface IStorage {
   
   // Analytics operations
   createAnalytics(analytics: InsertAnalytics): Promise<Analytics>;
-  getAnalytics(category: string): Promise<Analytics[]>;
+  getAnalytics(category?: string): Promise<Analytics[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -408,7 +408,8 @@ export class MemStorage implements IStorage {
     const newBattery: Battery = { 
       ...battery, 
       id, 
-      createdAt: now 
+      createdAt: now,
+      userId: battery.userId || null
     };
     this.batteries.set(id, newBattery);
     return newBattery;
@@ -432,7 +433,16 @@ export class MemStorage implements IStorage {
   async createOrder(order: InsertOrder): Promise<Order> {
     const id = this.orderId++;
     const now = new Date();
-    const newOrder: Order = { ...order, id, createdAt: now };
+    const newOrder: Order = { 
+      ...order, 
+      id, 
+      createdAt: now,
+      userId: order.userId || null,
+      batteryId: order.batteryId || null,
+      status: order.status || null,
+      pickupLocation: order.pickupLocation || null,
+      isPickup: order.isPickup || null
+    };
     this.orders.set(id, newOrder);
     return newOrder;
   }
@@ -464,7 +474,7 @@ export class MemStorage implements IStorage {
   async createIdea(idea: InsertIdea): Promise<Idea> {
     const id = this.ideaId++;
     const now = new Date();
-    const newIdea: Idea = { ...idea, id, votes: 0, createdAt: now };
+    const newIdea: Idea = { ...idea, id, votes: 0, createdAt: now, tags: idea.tags ?? null };
     this.ideas.set(id, newIdea);
     return newIdea;
   }
@@ -481,7 +491,7 @@ export class MemStorage implements IStorage {
     const idea = this.ideas.get(id);
     if (!idea) return undefined;
     
-    const updatedIdea: Idea = { ...idea, votes: idea.votes + 1 };
+    const updatedIdea: Idea = { ...idea, votes: (idea.votes ?? 0) + 1 };
     this.ideas.set(id, updatedIdea);
     return updatedIdea;
   }
@@ -490,7 +500,7 @@ export class MemStorage implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     const id = this.productId++;
     const now = new Date();
-    const newProduct: Product = { ...product, id, createdAt: now };
+    const newProduct: Product = { ...product, id, createdAt: now, capacity: product.capacity ?? null, capacityPercentage: product.capacityPercentage ?? null, tags: product.tags ?? null };
     this.products.set(id, newProduct);
     return newProduct;
   }
@@ -556,7 +566,7 @@ export class MemStorage implements IStorage {
   async createSubsidy(subsidy: InsertSubsidy): Promise<Subsidy> {
     const id = this.subsidyId++;
     const now = new Date();
-    const newSubsidy: Subsidy = { ...subsidy, id, createdAt: now };
+    const newSubsidy: Subsidy = { ...subsidy, id, createdAt: now, link: subsidy.link ?? null, state: subsidy.state ?? null, amount: subsidy.amount ?? null };
     this.subsidies.set(id, newSubsidy);
     return newSubsidy;
   }
@@ -570,7 +580,7 @@ export class MemStorage implements IStorage {
   }
   
   async getSubsidiesByState(state: string): Promise<Subsidy[]> {
-    if (!state || state === "Select state") return this.getSubsidies();
+    if (!state || state === "Select state" || state === "all") return this.getSubsidies();
     
     return Array.from(this.subsidies.values()).filter(
       (subsidy) => subsidy.state === state
@@ -578,7 +588,7 @@ export class MemStorage implements IStorage {
   }
   
   async getSubsidiesByCategory(category: string): Promise<Subsidy[]> {
-    if (!category || category === "All incentives") return this.getSubsidies();
+    if (!category || category === "All incentives" || category === "all") return this.getSubsidies();
     
     return Array.from(this.subsidies.values()).filter(
       (subsidy) => subsidy.category === category
@@ -589,7 +599,13 @@ export class MemStorage implements IStorage {
   async createAnalytics(analytics: InsertAnalytics): Promise<Analytics> {
     const id = this.analyticsId++;
     const now = new Date();
-    const newAnalytics: Analytics = { ...analytics, id, createdAt: now };
+    const newAnalytics: Analytics = { 
+      ...analytics, 
+      id, 
+      createdAt: now,
+      data: analytics.data || {},
+      unit: analytics.unit || null
+    };
     this.analytics.set(id, newAnalytics);
     return newAnalytics;
   }
